@@ -15,12 +15,16 @@ const productSchema = mongoose.Schema(
       {
         nameproduct: {
           type: String,
-          required: false,
+          required: true,
           unique:true 
         },
         quantity: {
           type: Number,
           required: true
+        },
+        unitmeasure:{
+          type: String,
+          require: true
         },
         price: {
           type: Number,
@@ -31,6 +35,10 @@ const productSchema = mongoose.Schema(
     subTotal: {
       type: Number,
       require: true,
+    },
+    percentage:{
+      type: Number,
+      require: true
     },
     profit: {
       type: Number,
