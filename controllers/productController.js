@@ -54,7 +54,6 @@ const updateProduct = async (req, res) => {
 
   product.image = req.body.image || product.image;
   product.name = req.body.name || product.name;
-  product.brand = req.body.brand || product.brand;
 
   // Mapeo de IDs de productos existentes
   const productIdMap = new Map();
