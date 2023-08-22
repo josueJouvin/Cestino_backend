@@ -91,7 +91,6 @@ const confirmation = async (req, res) => {
     res.json({ msg: "usuario confirmado correctamente" });
 
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "Error al confirmar el usuario" });
   }
 };

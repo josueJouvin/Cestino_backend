@@ -8,7 +8,8 @@ const addProduct = async (req, res) => {
     const savedProduct = await product.save();
     res.json(savedProduct);
   } catch (error) {
-    console.log(error);
+    res.status(500).json({ error: "Este producto ya ha sido registrado"});
+
   }
 };
 
@@ -37,6 +38,7 @@ const getProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   const { id } = req.params;
+  const {name, subtotal, profit, total, percentage, products} = req.body
 
   if (id.length !== 24) {
     return res.status(403).json({ msg: "No Encontrado" });
@@ -56,33 +58,25 @@ const updateProduct = async (req, res) => {
   product.name = req.body.name || product.name;
 
   // Mapeo de IDs de productos existentes
-  const productIdMap = new Map();
-  product.products.forEach((prod, index) => {
-    productIdMap.set(prod._id.toString(), index);
-  });
+  if (products && Array.isArray(products)) {
+    // Actualizar productos internos (si es necesario)
+    product.products = products.map(updatedProduct => {
+      const existingProduct = product.products.find(p => p._id.equals(updatedProduct._id));
+      if (existingProduct) {
+        return {
+          ...existingProduct,
+          ...updatedProduct
+        };
+      }
+      return updatedProduct;
+    });
+  }
 
-  // Actualizar productos internos
-  req.body.products.forEach((element) => {
-    const existingProductIndex = productIdMap.get(element.productId);
 
-    if (existingProductIndex !== undefined) {
-      const existingProduct = product.products[existingProductIndex];
-      existingProduct.nameproduct = element.nameproduct || existingProduct.nameproduct;
-      existingProduct.quantity = element.quantity || existingProduct.quantity;
-      existingProduct.price = element.price || existingProduct.price;
-    } else {
-      const newProduct = {
-        nameproduct: element.nameproduct,
-        quantity: element.quantity,
-        price: element.price,
-      };
-      product.products.push(newProduct);
-    }
-  });
-
-  product.subtotal = req.body.subtotal || product.subtotal;
-  product.profit = req.body.profit || product.profit;
-  product.total = req.body.total || product.total;
+  product.subtotal = subtotal || product.subtotal;
+  product.percentage = percentage || product.percentage
+  product.profit = profit || product.profit;
+  product.total = total || product.total;
 
   try {
     const updatedProduct = await product.save();
@@ -91,11 +85,10 @@ const updateProduct = async (req, res) => {
     console.log(error);
     res.status(500).json({ msg: "Error interno del servidor" });
   }
-};
+}; 
 
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
-  const { productsId } = req.body;
 
   if (id.length !== 24) {
     return res.status(403).json({ msg: "No Encontrado" });
@@ -109,18 +102,6 @@ const deleteProduct = async (req, res) => {
 
   if (product.seller._id.toString() !== req.seller._id.toString()) {
     return res.json({ msg: "Acción no válida" });
-  }
-
-  if (productsId && Array.isArray(productsId) && productsId.length > 0) {
-    const productsToRemove = product.products.filter(prod => productsId.includes(prod._id.toString()));
-  
-    if (productsToRemove.length > 0) {
-      product.products = product.products.filter(prod => !productsId.includes(prod._id.toString()));
-      await product.save();
-      return res.json({ msg: "Productos eliminados" });
-    } else {
-      return res.status(404).json({ msg: "Productos no encontrados" });
-    }
   }
 
   try {
