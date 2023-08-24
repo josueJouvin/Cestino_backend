@@ -241,4 +241,63 @@ const newPassword = async(req, res) => {
 
 }
 
-export { register, profile, confirmation, authenticate, lostPassword, checkToken, newPassword };
+const updateProfile = async(req, res) =>{
+  const seller = await Seller.findById(req.params.id)
+
+  if(!seller){
+    const error = new Error("Hubo un error")
+    return res.status(400).json({msg: error.message})
+  }
+
+  const {email} = req.body
+  if(seller.email !== req.body.email){
+    const validEmail = await Seller.findOne({email})
+    if(validEmail){
+      const error = new Error("Este email ya esta en uso")
+      return res.status(400).json({msg: error.message})
+    }
+  }
+  try {
+    seller.name = req.body.name;
+    seller.companyName = req.body.companyName;
+    seller.phone = req.body.phone;
+    seller.email = req.body.email;
+
+    const updateSeller = await seller.save();
+    res.json(updateSeller)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const updatePassword = async(req, res) => {
+  const {_id} = req.seller;
+  const {pwd_current, pwd_new} = req.body
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+  if (typeof pwd_new !== 'string' || pwd_new.trim() === '') {
+    const error = new Error("Campo obligatorio para contraseña");
+    return res.status(400).json({ msg: error.message });
+  }
+  
+  if (!passwordRegex.test(pwd_new)) {
+    const error = new Error("Error en la contraseña");
+    return res.status(400).json({ msg: error.message });
+  }
+
+  const seller = await Seller.findById({_id})
+  if(!seller){
+    const error = new Error("Hubo un error")
+    return res.status(400).json({msg: error.message})
+  }
+
+  if(await seller.checkPassword(pwd_current)){
+    seller.password = pwd_new
+    await seller.save()
+    res.json({msg: "Password Almacenado Correctamente"})
+  }else{
+    const error = new Error("Password Actual Incorrecto")
+    return res.status(400).json({msg: error.message})
+  }
+}
+export { register, profile, confirmation, authenticate, lostPassword, checkToken, newPassword, updateProfile, updatePassword };
