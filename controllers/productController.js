@@ -1,6 +1,6 @@
 import Product from "../models/Product.js";
 
-const addProduct = async (req, res) => {
+const addProduct = async (req, res) => { 
   const {name, products} = req.body
   if(name.trim() === ""){
     const error = new Error("Existen campos vacios");
@@ -10,14 +10,14 @@ const addProduct = async (req, res) => {
     const error = new Error("Se requiere al menos 1 producto");
     return res.status(400).json({ msg: error.message });
   }
-  
   const product = new Product(req.body);
   product.seller = req.seller._id;
-
+  
   try {
     const savedProduct = await product.save();
     res.json(savedProduct);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ msg: "Esta Canasta ya Existe"});
   }
 };
@@ -48,7 +48,7 @@ const getProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   const { id } = req.params;
   const {name, subtotal, profit, total, percentage, products} = req.body
-
+  
   if(name.trim() === ""){
     const error = new Error("Existen campos vacios");
     return res.status(400).json({ msg: error.message });
@@ -74,18 +74,18 @@ const updateProduct = async (req, res) => {
 
   product.image = req.body.image || product.image;
   product.name = req.body.name || product.name;
-
+  
   if (products && Array.isArray(products)) {
-    // Actualizar productos internos (si es necesario)
+    products.products = products.map(({ id, ...prod }) => prod);
     product.products = products.map(updatedProduct => {
-      const existingProduct = product.products.find(p => p._id.equals(updatedProduct._id));
+      const existingProduct = product.products.find(p => p._id.equals(updatedProduct._id)); 
       if (existingProduct) {
         return {
           ...existingProduct,
           ...updatedProduct
         };
       }
-      return updatedProduct;
+        return updatedProduct;
     });
   }
   product.subtotal = subtotal || product.subtotal;
@@ -97,6 +97,7 @@ const updateProduct = async (req, res) => {
     const updatedProduct = await product.save();
     res.json(updatedProduct);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ msg: "Esta Canasta ya Existe"});
   }
 }; 

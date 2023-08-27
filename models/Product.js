@@ -4,18 +4,20 @@ const productSchema = mongoose.Schema(
   {
     image: {
       type: String,
-      require: false,
+      required: false,
     },
     name: {
       type: String,
-      require: true,
-      unique: true
+      required: true,
+      unique: true,
+      trim: true
     },
     products: [
       {
         nameproduct: {
           type: String,
-          required: true
+          required: true,
+          trim: true
         },
         quantity: {
           type: Number,
@@ -23,29 +25,27 @@ const productSchema = mongoose.Schema(
         },
         unitmeasure:{
           type: String,
-          require: true
+          required: true
         },
         price: {
           type: Number,
-          required: true
+          requiredd: true
         },
       },
     ],
     subTotal: {
       type: Number,
-      require: true,
+      required: true,
     },
     percentage:{
-      type: Number,
-      require: true
+      type: Number
     },
     profit: {
-      type: Number,
-      require: true,
+      type: Number
     },
     total: {
       type: Number,
-      require: true,
+      required: true,
     },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
