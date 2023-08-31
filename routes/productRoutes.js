@@ -7,6 +7,7 @@ import {
   deleteProduct,
 } from "../controllers/productController.js";
 import checkAuth from "../middleware/authMiddleware.js";
+import {upload} from "../utils/multer.js"
 
 const router = express.Router();
 router.route("/").post(checkAuth, addProduct).get(checkAuth, getProducts);

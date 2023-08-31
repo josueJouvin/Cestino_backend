@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const productSchema = mongoose.Schema(
   {
     image: {
-      type: String,
-      required: false,
+      public_id: String,
+      secure_url: String
     },
     name: {
       type: String,

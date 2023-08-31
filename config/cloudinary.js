@@ -1,20 +1,39 @@
-import {v2 as cloudinary} from "cloudinary"
-import dotenv from "dotenv"
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 cloudinary.config({ 
     cloud_name: process.env.CLOUDINARY_NAME, 
     api_key: process.env.CLOUDINARY_KEY, 
     api_secret: process.env.CLOUDINARY_SECRET,
     secure: true
-  });
+});
 
-export async function uploadImage(filePaht) {
-    return await cloudinary.uploader.upload(filePaht,{
-        folder: "cestino"
-    })
+// Función para subir una imagen a Cloudinary
+export async function uploadImage(filePath) {
+    console.log(filePath)
+    try {
+        const result = await cloudinary.uploader.upload(filePath, {
+            folder: "cestino"
+        });
+        return result;
+    } catch (error) {
+         res.status(400).json({ msg: "Error al subir la imagen"});
+    }
 }
 
+// Función para eliminar una imagen de Cloudinary
 export async function deleteImage(publicId) {
-    return await cloudinary.uploader.destroy(publicId)
+    try {
+        const result = await cloudinary.uploader.destroy(publicId);
+        return result;
+    } catch (error) {
+        res.status(400).json({ msg: "Error al eliminar la imagen"});
+    }
 }
+
+
+
+
+
+

@@ -4,6 +4,7 @@ import cors from "cors"
 import connectDB from "./config/db.js";
 import sellerRoutes from "./routes/sellerRoutes.js"
 import productRoutes from "./routes/productRoutes.js"
+import fileUpload from "express-fileupload";
 
 
 const app = express()
@@ -23,6 +24,10 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: "./uploads"
+}))
 
 app.use("/api/vendedor", sellerRoutes)
 app.use("/api/producto", productRoutes)
