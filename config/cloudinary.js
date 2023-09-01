@@ -14,7 +14,9 @@ export async function uploadImage(filePath) {
     console.log(filePath)
     try {
         const result = await cloudinary.uploader.upload(filePath, {
-            folder: "cestino"
+            folder: "cestino",
+            format: "webp",
+            transformation:[{ width: 500, height: 500, crop: "limit" },{quality: "auto"}]
         });
         return result;
     } catch (error) {
