@@ -9,9 +9,7 @@ cloudinary.config({
     secure: true
 });
 
-// Función para subir una imagen a Cloudinary
 export async function uploadImage(filePath) {
-    console.log(filePath)
     try {
         const result = await cloudinary.uploader.upload(filePath, {
             folder: "cestino",
@@ -24,7 +22,6 @@ export async function uploadImage(filePath) {
     }
 }
 
-// Función para eliminar una imagen de Cloudinary
 export async function deleteImage(publicId) {
     try {
         const result = await cloudinary.uploader.destroy(publicId);

@@ -258,10 +258,10 @@ const updateProfile = async(req, res) =>{
     }
   }
   try {
-    seller.name = req.body.name;
-    seller.companyName = req.body.companyName;
-    seller.phone = req.body.phone;
-    seller.email = req.body.email;
+    seller.name = req.body.name || seller.name;
+    seller.companyName = req.body.companyName || seller.companyName;
+    seller.phone = req.body.phone || seller.phone;
+    seller.email = req.body.email || seller.email;
 
     const updateSeller = await seller.save();
     res.json(updateSeller)
