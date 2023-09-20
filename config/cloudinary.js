@@ -18,7 +18,7 @@ export async function uploadImage(filePath) {
         });
         return result;
     } catch (error) {
-         res.status(400).json({ msg: "Error al subir la imagen"});
+        res.status(400).json({ msg: "Error al subir la imagen o la imagen es muy pesada"});
     }
 }
 

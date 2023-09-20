@@ -16,7 +16,7 @@ const emailRegister = async ({email, name, token}) =>{
         subject: "Comprueba tu cuenta en Cestino",
         text: "Comprueba tu cuenta en Cestino",
         html: `<p>Hola: ${name}, comprueba tu cuenta en Cestino.</p>
-               <p>Tu cuenta ya esta lista, solo debes comprobarla en el siguente enlace: <a href="${process.env.FRONTEND_URL}/confirmar/${token}">Comprobar Cuenta</a></p>
+               <p>Tu cuenta ya esta lista, solo debes comprobarla en el siguente enlace: <a href="${process.env.FRONTEND_URL}/auth/confirmar/${token}">Comprobar Cuenta</a></p>
                
                <p>Si tu no creaste esta cuenta, puedes ignorar este mensaje</p>
         `

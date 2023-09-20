@@ -242,6 +242,7 @@ const newPassword = async(req, res) => {
 }
 
 const updateProfile = async(req, res) =>{
+  const {email} = req.body
   const seller = await Seller.findById(req.params.id)
 
   if(!seller){
@@ -249,7 +250,6 @@ const updateProfile = async(req, res) =>{
     return res.status(400).json({msg: error.message})
   }
 
-  const {email} = req.body
   if(seller.email !== req.body.email){
     const validEmail = await Seller.findOne({email})
     if(validEmail){
@@ -260,7 +260,7 @@ const updateProfile = async(req, res) =>{
   try {
     seller.name = req.body.name || seller.name;
     seller.companyName = req.body.companyName || seller.companyName;
-    seller.phone = req.body.phone || seller.phone;
+    seller.phone = (req.body.phone !== undefined) ? req.body.phone : seller.phone;
     seller.email = req.body.email || seller.email;
 
     const updateSeller = await seller.save();

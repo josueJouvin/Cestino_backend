@@ -1,7 +1,8 @@
 import Product from "../models/Product.js";
-import { uploadImage, deleteImage } from "../config/cloudinary.js";
+import { deleteImage } from "../config/cloudinary.js";
+import { imageValid } from "../helpers/imageValid.js"
 import fs from "fs-extra"
-import path from "path"
+import { imageUpdated } from "../helpers/updatedImage.js";
 
 const addProduct = async (req, res) => {
   const { name, products, subTotal, percentage, profit, total } = JSON.parse(req.body.jsonData);
@@ -13,8 +14,10 @@ const addProduct = async (req, res) => {
 
   const existingProduct = await Product.findOne({ name });
   if (existingProduct) {
-     res.status(400).json({ msg: "La canasta ya existe", name });
-     return
+    if(req.files?.image){
+      await fs.unlink(req.files.image.tempFilePath)
+    }
+    return res.status(400).json({ msg: `La canasta ${name} ya existe`, name });
   }
 
   const productData = {
@@ -26,31 +29,17 @@ const addProduct = async (req, res) => {
     profit,
     total
   };
-  
-  if (req.files?.image && req.files.image.mimetype.startsWith('image/')) {
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif','.tiff', '.webp', '.svg', '.ico','.avif']; 
-    const fileExtension = path.extname(req.files.image.name).toLowerCase();
-    if (allowedExtensions.includes(fileExtension)) {
-      const result = await uploadImage(req.files.image.tempFilePath);
-      productData.image = {
-        public_id: result.public_id,
-        secure_url: result.secure_url
-      };
-    } else {
-      res.status(400).json({ msg: "Imagen no válido" });
-      return 
-    }
+
+  const imageInfo = await imageValid(res, req.files?.image);
+  if(imageInfo){
+    productData.image = imageInfo
   }
 
   const product = new Product(productData)
   try {
     const savedProduct = await product.save();
     res.json(savedProduct);
-    if(req.files?.image){
-      await fs.unlink(req.files.image.tempFilePath)
-    }
   } catch (error) {
-    console.log(error, "error")
     res.status(500).json({ msg: "Error al crear canasta"});
     if(req.files?.image){
       await deleteImage(product.image.public_id)
@@ -117,57 +106,35 @@ const updateProduct = async (req, res) => {
 
   const existingProduct = await Product.findOne({ name });
   if (existingProduct && existingProduct._id.toString() !== id) {
-    return res.status(400).json({ msg: "La canasta ya existe", name });
+    return res.status(400).json({ msg: `La canasta ${name} ya existe`, name });
   }
 
   product.name = name || product.name
+
   //image
-  if (req.files?.image && req.files.image.mimetype.startsWith('image/')) {
-    const fileExtension = path.extname(req.files.image.name).toLowerCase();
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.tiff', '.webp', '.svg', '.ico', '.avif'];
+  await imageUpdated(res, product, req.files?.image, req)
 
-    if (!allowedExtensions.includes(fileExtension)) {
-      return res.status(400).json({ msg: "Extensión de archivo no permitida" });
-    }
-  
-    try {  
-      if (product.image?.public_id) {
-        await deleteImage(product.image.public_id);
-      }
+  if(!product && !Array.isArray(products)) {
+    return res.status(500).json({ msg: "Error en products" });
+  }
 
-      const result = await uploadImage(req.files.image.tempFilePath);
-      product.image = {
-        public_id: result.public_id,
-        secure_url: result.secure_url,
+  const existingProductsMap = {};
+  product.products.forEach(existingProduct => {
+    existingProductsMap[existingProduct._id] = existingProduct;
+  });
+
+  const updatedProducts = products.map(updatedProduct => {
+    const existingProduct = existingProductsMap[updatedProduct._id];
+    if (existingProduct) {
+      return {
+        ...existingProduct,
+        ...updatedProduct
       };
-      
-      await fs.unlink(req.files.image.tempFilePath);
-    } catch (error) {
-      return res.status(500).json({ msg: "Error al actualizar la imagen" });
     }
-  } 
+    return updatedProduct;
+  });
 
-  if (!req.files && !req.body.image.startsWith("https") && product.image?.public_id) {
-    await deleteImage(product.image.public_id);
-    product.image = null;
-  }
-
-  //products
-  if (products && Array.isArray(products)) {
-    product.products = products.map(updatedProduct => {
-      const existingProduct = product.products.find(p => p._id.equals(updatedProduct._id));
-      if (existingProduct) {
-        return {
-          ...existingProduct,
-          ...updatedProduct
-        };
-      }
-      return updatedProduct;
-    });
-  } else {
-    res.status(500).json({ msg: "Error en products"});
-  }
- 
+  product.products = updatedProducts;
   product.subtotal = (percentage !== undefined) ? subtotal : product.subtotal;
   product.percentage = (percentage !== undefined) ? percentage : product.percentage;
   product.profit = (profit !== undefined) ? profit : product.profit;
@@ -199,10 +166,10 @@ const deleteProduct = async (req, res) => {
     return res.json({ msg: "Acción no válida" });
   }
 
+  if(product.image.public_id){
+    await deleteImage(product.image.public_id)
+  }
   try {
-    if(product.image.public_id){
-      await deleteImage(product.image.public_id)
-    }
     await product.deleteOne();
     res.json({ msg: "Canasta eliminada" });
   } catch (error) {
