@@ -1,64 +1,34 @@
 import Seller from "../models/Seller.js";
-import axios from "axios"
 import generateJWT from "../helpers/generateJWT.js";
 import generateId from "../helpers/generateId.js";
 import emailRegister from "../helpers/emailRegister.js";
 import emailForgetPassword from "../helpers/emailForgetPassword.js";
+import { validCaptcha, validEmail, validField, validName, validPassword } from "../utils/validFields.js";
 
 const register = async (req, res) => {
   const { email, name, password, repeatPassword, captcha} = req.body;
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&+\\/.-])[A-Za-z\d@$!%*?&+\\/.-]{8,}$/;
-  const emailRegex = /^[a-zA-Z0-9._%+-]*[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*[a-zA-Z][a-zA-Z0-9._%+-]+\.[a-zA-Z]{2,}$/;
-  const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s'_-]+$/
+  const requiredFields = [name, email, password, repeatPassword, captcha];
 
-  if([name.trim(),email.trim(),password.trim(),repeatPassword.trim()].includes("") || !captcha){
-    const error = new Error("Existen campos vacios");
-    return res.status(400).json({ msg: error.message });
-  }
-  
-  if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || typeof repeatPassword !== 'string') {
-    const error = new Error("Error En los tipos");
-     return res.status(400).json({ msg: error.message });
+  const isUser = await Seller.findOne({ email });
+  if (isUser) {
+    const error = new Error("Usuario ya registrado");
+    return res.status(400).json({ msg: error.message, emailR: isUser.email});
   }
 
-  if(!nameRegex.test(name)){
-    const error = new Error("Nombre inválido. No debe contener caracteres especiales.");
-    return res.status(400).json({ msg: error.message });
-  }
-  
-  if(!emailRegex.test(email)){
-    const error = new Error("Email no valido");
-    return res.status(400).json({ msg: error.message });
-  }
+  validField(res, requiredFields)
 
-  if (!passwordRegex.test(password)) {
-    const error = new Error("Error en la contraseña");
-    return res.status(400).json({ msg: error.message });
-  }
+  validName(res, name)
+
+  validEmail(res, email)
+
+  validPassword(res, password)
 
   if(password !== repeatPassword){
     const error = new Error("Los Password no son iguales");
     return res.status(400).json({ msg: error.message });
   }
 
-  if (captcha) {
-    const captchaVerified = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET}&response=${captcha}`
-    );
-  
-    // Extract result from the API response
-    if(!captchaVerified.data.success){
-      const error = new Error("Captcha Incorrecto");
-      return res.status(404).json({ msg: error.message ,emailR: email});
-   }
-  }
-
-  const isUser = await Seller.findOne({ email });
-  
-  if (isUser) {
-    const error = new Error("Usuario ya registrado");
-    return res.status(400).json({ msg: error.message, emailR: isUser.email});
-  }
+  await validCaptcha(res,captcha)
 
   try {
     const seller = new Seller(req.body);
@@ -67,6 +37,7 @@ const register = async (req, res) => {
     res.json(saveSeller);
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ msg: "Error al registrar usuario" });
   }
 }; 
 
@@ -77,8 +48,8 @@ const profile = (req, res) => {
 
 const confirmation = async (req, res) => {
   const { token } = req.params;
-  const confirmUser = await Seller.findOne({ token });
 
+  const confirmUser = await Seller.findOne({ token });
   if (!confirmUser) {
     const error = new Error("Token no valido");
     return res.status(404).json({ msg: error.message });
@@ -98,47 +69,22 @@ const confirmation = async (req, res) => {
 //login
 const authenticate = async (req, res) => {
   const { email, password, captcha } = req.body;
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&+\\/.-])[A-Za-z\d@$!%*?&+\\/.-]{8,}$/;
-  const emailRegex = /^[a-zA-Z0-9._%+-]*[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*[a-zA-Z][a-zA-Z0-9._%+-]+\.[a-zA-Z]{2,}$/;
+  const requiredFields = [email, password, captcha]
 
-  if([email.trim(),password.trim()].includes("") || !captcha){
-    const error = new Error("Existen campos vacios");
-    return res.status(400).json({ msg: error.message });
-  }
-  
-  if (typeof email !== 'string' || typeof password !== 'string') {
-    const error = new Error("Error En los tipos");
-     return res.status(400).json({ msg: error.message });
-  }
-
-  if(!emailRegex.test(email)){
-    const error = new Error("Email no valido");
-    return res.status(400).json({ msg: error.message });
-  }
-
-  if (!passwordRegex.test(password)) {
-    const error = new Error("Error en la contraseña");
-    return res.status(400).json({ msg: error.message});
-  }
-
-  if (captcha) {
-    const captchaVerified = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET}&response=${captcha}`
-    );
-  
-    // Extract result from the API response
-    if(!captchaVerified.data.success){
-      const error = new Error("Captcha Incorrecto");
-      return res.status(404).json({ msg: error.message ,emailR: email});
-   }
-  }
- 
-  //checking if the user exists
   const user = await Seller.findOne({ email });
   if (!user) {
     const error = new Error("El usuario no existe");
     return res.status(404).json({ msg: error.message ,emailR: email});
   }
+
+  validField(res, requiredFields)
+
+  validEmail(res, email)
+
+  validPassword(res, password)
+
+  await validCaptcha(res, captcha)
+ 
   //checking if the user is confirmed
   if (!user.confirmed) {
     const error = new Error("Tu cuenta no ha sido confirmada, revisa tu email");
@@ -155,24 +101,18 @@ const authenticate = async (req, res) => {
 
 const lostPassword = async(req, res) => {
   const {email} = req.body
-  const emailRegex = /^[a-zA-Z0-9._%+-]*[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*[a-zA-Z][a-zA-Z0-9._%+-]+\.[a-zA-Z]{2,}$/;
-
-  if (typeof email !== 'string' || email.trim() === '') {
-    const error = new Error("Campo obligatorio para Email");
-    return res.status(400).json({ msg: error.message });
-  }
-
-  if(!emailRegex.test(email)){
-    const error = new Error("Email no valido");
-    return res.status(400).json({ msg: error.message });
-  }
+  const requiredFields = [email]
 
   const sellerExists = await Seller.findOne({email});
-
   if(!sellerExists){
     const error = new Error("El usuario no existe");
     return res.status(400).json({ msg: error.message, emailR: email});
   }
+
+  validField(res, requiredFields)
+
+  validEmail(res, email)
+  
   if (!sellerExists.confirmed) {
     return res.status(409).json({ msg: "Su cuenta aun no ha sido confirmada. Revise su correo", confirmed: sellerExists.confirmed, emailR: email });
   }
@@ -193,6 +133,7 @@ const lostPassword = async(req, res) => {
     res.json({msg: "Hemos enviado un email con las instrucciones" })
   }catch(error){
     console.log(error)
+    return res.status(500).json({ msg: "Error en recuperar password" });
   }
 }
 
@@ -200,7 +141,6 @@ const checkToken = async(req, res) => {
   const {token} = req.params;
 
   const validToken = await Seller.findOne({token});
-
   if(validToken){
     res.json({msg: "Token valido y el usuario existe"});
   }else{
@@ -212,12 +152,9 @@ const checkToken = async(req, res) => {
 const newPassword = async(req, res) => {
   const {token} = req.params;
   const {password} = req.body
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const requiredFields = [password]
 
-  if (typeof password !== 'string' || password.trim() === '') {
-    const error = new Error("Campo obligatorio para contraseña");
-    return res.status(400).json({ msg: error.message });
-  }
+  validField(res, requiredFields)
   
   if (!passwordRegex.test(password)) {
     const error = new Error("Error en la contraseña. La contraseña debe contener al menos 8 caracteres, una letra minúscula, una letra mayúscula, un número y un carácter especial (@$!%*?&).");
@@ -243,16 +180,21 @@ const newPassword = async(req, res) => {
 
 const updateProfile = async(req, res) =>{
   const {email} = req.body
-  const seller = await Seller.findById(req.params.id)
+  const requiredFields = [email]
 
+  const seller = await Seller.findById(req.params.id)
   if(!seller){
     const error = new Error("Hubo un error")
     return res.status(400).json({msg: error.message})
   }
 
+  validField(res, requiredFields)
+
+  validEmail(email)
+
   if(seller.email !== req.body.email){
-    const validEmail = await Seller.findOne({email})
-    if(validEmail){
+    const existEmail = await Seller.findOne({email})
+    if(existEmail){
       const error = new Error("Este email ya esta en uso")
       return res.status(400).json({msg: error.message})
     }
@@ -273,23 +215,17 @@ const updateProfile = async(req, res) =>{
 const updatePassword = async(req, res) => {
   const {_id} = req.seller;
   const {pwd_current, pwd_new} = req.body
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-  if (typeof pwd_new !== 'string' || pwd_new.trim() === '') {
-    const error = new Error("Campo obligatorio para contraseña");
-    return res.status(400).json({ msg: error.message });
-  }
-  
-  if (!passwordRegex.test(pwd_new)) {
-    const error = new Error("Error en la contraseña");
-    return res.status(400).json({ msg: error.message });
-  }
 
   const seller = await Seller.findById({_id})
   if(!seller){
     const error = new Error("Hubo un error")
     return res.status(400).json({msg: error.message})
   }
+
+  const requiredFields = [pwd_new]
+  validField(res,requiredFields)
+
+  validPassword(res,pwd_new)
 
   if(await seller.checkPassword(pwd_current)){
     seller.password = pwd_new
