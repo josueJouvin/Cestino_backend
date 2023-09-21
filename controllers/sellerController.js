@@ -167,14 +167,7 @@ const newPassword = async (req, res) => {
   const { password } = req.body;
   const requiredFields = [password];
 
-  if (!validField(res, requiredFields)) return;
-
-  if (!passwordRegex.test(password)) {
-    const error = new Error(
-      "Error en la contraseña. La contraseña debe contener al menos 8 caracteres, una letra minúscula, una letra mayúscula, un número y un carácter especial (@$!%*?&)."
-    );
-    return res.status(400).json({ msg: error.message });
-  }
+  if (!validField(res, requiredFields) || !validPassword(res,password)) return;
 
   const seller = await Seller.findOne({ token });
   if (!seller) {
