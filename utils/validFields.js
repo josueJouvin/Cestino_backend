@@ -5,8 +5,10 @@ function validField(res, requiredFields) {
     requiredFields.some((field) => !field.trim() || typeof field !== "string")
   ) {
     const error = new Error("Existen campos vacios o inválidos");
-    return res.status(400).json({ msg: error.message });
+    res.status(400).json({ msg: error.message });
+    return false
   }
+  return true
 }
 
 function validName(res, name) {
@@ -16,29 +18,32 @@ function validName(res, name) {
     const error = new Error(
       "Nombre inválido. No debe contener caracteres especiales."
     );
-    return res.status(400).json({ msg: error.message });
+    res.status(400).json({ msg: error.message })
+    return false
   }
+  return true
 }
 
 function validEmail(res, email) {
-  const emailRegex =
-    /^[a-zA-Z0-9._%+-]*[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*[a-zA-Z][a-zA-Z0-9._%+-]+\.[a-zA-Z]{2,}$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]*[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*[a-zA-Z][a-zA-Z0-9._%+-]+\.[a-zA-Z]{2,}$/;
 
   if (!emailRegex.test(email)) {
-    console.log("error");
     const error = new Error("Email no valido");
-    return res.status(400).json({ msg: error.message });
+    res.status(400).json({ msg: error.message })
+    return false
   }
+  return true
 }
 
 function validPassword(res, password) {
-  const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&+\\/.-])[A-Za-z\d@$!%*?&+\\/.-]{8,}$/;
+  const passwordRegex =/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&+\\/.-])[A-Za-z\d@$!%*?&+\\/.-]{8,}$/;
 
   if (!passwordRegex.test(password)) {
     const error = new Error("Error en la contraseña");
-    return res.status(400).json({ msg: error.message });
+    res.status(400).json({ msg: error.message })
+    return false;
   }
+  return true
 }
 
 async function validCaptcha(res, captcha) {
@@ -49,10 +54,11 @@ async function validCaptcha(res, captcha) {
 
     if (!captchaVerified.data.success) {
       const error = new Error("Captcha Incorrecto");
-      return res.status(404).json({ msg: error.message, emailR: email });
+      res.status(404).json({ msg: error.message, emailR: email });
     }
   } else {
-    return res.status(404).json({ msg: "El captcha es necesario" });
+    res.status(404).json({ msg: "El captcha es necesario" });
+    return false
   }
 }
 
