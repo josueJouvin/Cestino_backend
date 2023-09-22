@@ -12,6 +12,7 @@
   "author": "Josue Garces Jouvin",
   "license": "ISC",
   "dependencies": {
+    "@getbrevo/brevo": "^1.0.1",
     "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
     "cloudinary": "^1.40.0",
