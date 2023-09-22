@@ -32,7 +32,7 @@ const emailForgetPassword = async ({email, name, token}) =>{
 
       try {
         const data = await resend.emails.send({
-          from: 'Cestino - Administra tus productos <cestino@cestino.com>',
+          from: 'Cestino - Administra tus productos <onboarding@resend.dev>',
           to: email,
           subject: 'Reestablece tu Password',
           text: "Reestablece tu Password",
