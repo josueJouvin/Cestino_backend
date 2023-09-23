@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer"
-import Brevo from "@getbrevo/brevo"
 
 const emailRegister = async ({email, name, token}) =>{
   
