@@ -12,7 +12,7 @@ const emailRegister = async ({email, name, token}) =>{
       });
 
       const info = await transport.sendMail({
-        from: "cestinoinfo27@gmail.com",
+        from: "Cestino App <cestinoinfo27@gmail.com>",
         to: email,
         subject: "Comprueba tu cuenta en Cestino",
         text: "Comprueba tu cuenta en Cestino",
